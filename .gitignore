@@ -1,0 +1,30 @@
+# Credentials — NEVER commit these
+.env
+credentials.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# Data cache
+server/data/vessels.json
+server/data/*.json
+
+# OS
+.DS_Store
+Thumbs.db
+._*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Claude
+.claude/

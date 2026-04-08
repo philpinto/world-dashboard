@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Dashboard</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="/css/dashboard.css" />
+</head>
+<body>
+
+    <!-- ===== STATUS BAR ===== -->
+    <div class="status-bar">
+        <div class="status-brand">World Dashboard</div>
+
+        <div class="status-item">
+            <div class="status-dot live" id="dot-flights"></div>
+            <span>FLT</span>
+        </div>
+        <div class="status-item">
+            <div class="status-dot live" id="dot-earthquakes"></div>
+            <span>SEIS</span>
+        </div>
+        <div class="status-item">
+            <div class="status-dot live" id="dot-ships"></div>
+            <span>AIS</span>
+        </div>
+        <div class="status-item">
+            <div class="status-dot waiting" id="dot-fires"></div>
+            <span>VIIRS</span>
+        </div>
+        <div class="status-item">
+            <div class="status-dot live" id="dot-space_weather"></div>
+            <span>SWPC</span>
+        </div>
+        <div class="status-item">
+            <div class="status-dot waiting" id="dot-volcanoes"></div>
+            <span>GVP</span>
+        </div>
+        <div class="status-item">
+            <div class="status-dot waiting" id="dot-radiation"></div>
+            <span>RAD</span>
+        </div>
+        <div class="status-item">
+            <div class="status-dot live" id="dot-buoys"></div>
+            <span>NDBC</span>
+        </div>
+
+        <div class="status-spacer"></div>
+
+        <div class="threat-badge" id="threatBadge" title="Click for threat breakdown" onclick="toggleThreatPanel()" style="cursor:pointer;">
+            <span class="threat-level" id="threatLevel">LOW</span>
+        </div>
+
+        <div class="status-refresh">
+            <div class="refresh-bar"><div class="refresh-bar-fill" id="refreshBarFill"></div></div>
+        </div>
+
+        <div class="status-clock" id="utcClock">00:00:00 UTC</div>
+    </div>
+
+    <!-- ===== CONNECTION LOST BANNER ===== -->
+    <div class="connection-banner" id="connectionBanner">
+        <span class="conn-icon">&#9888;</span>
+        <span>CONNECTION LOST</span>
+        <span class="conn-sub">Displaying stale data</span>
+    </div>
+
+    <!-- ===== MAP ===== -->
+    <div id="map"></div>
+
+    <!-- ===== LAYER SIDEBAR ===== -->
+    <div class="layer-sidebar">
+        <div class="layer-header">Layers</div>
+
+        <div class="layer-item active" id="layer-flights">
+            <div class="layer-toggle"></div>
+            <div class="layer-icon" style="background: var(--flight-color);"></div>
+            <div class="layer-name">Flights</div>
+            <div class="layer-count" id="count-flights">0</div>
+        </div>
+
+        <div class="layer-item active" id="layer-earthquakes">
+            <div class="layer-toggle"></div>
+            <div class="layer-icon" style="background: var(--quake-color);"></div>
+            <div class="layer-name">Earthquakes</div>
+            <div class="layer-count" id="count-earthquakes">0</div>
+        </div>
+
+        <div class="layer-item active" id="layer-ships">
+            <div class="layer-toggle"></div>
+            <div class="layer-icon" style="background: var(--ship-color);"></div>
+            <div class="layer-name">Ships</div>
+            <div class="layer-count" id="count-ships">0</div>
+        </div>
+
+        <div class="layer-item" id="layer-fires">
+            <div class="layer-toggle"></div>
+            <div class="layer-icon" style="background: var(--fire-color);"></div>
+            <div class="layer-name">Fires</div>
+            <div class="layer-count" id="count-fires">0</div>
+        </div>
+
+        <div class="layer-item" id="layer-volcanoes">
+            <div class="layer-toggle"></div>
+            <div class="layer-icon" style="background: #ff1744;"></div>
+            <div class="layer-name">Volcanoes</div>
+            <div class="layer-count" id="count-volcanoes">0</div>
+        </div>
+
+        <div class="layer-item" id="layer-radiation">
+            <div class="layer-toggle"></div>
+            <div class="layer-icon" style="background: #76ff03;"></div>
+            <div class="layer-name">Radiation</div>
+            <div class="layer-count" id="count-radiation">0</div>
+        </div>
+
+        <div class="layer-item" id="layer-buoys">
+            <div class="layer-toggle"></div>
+            <div class="layer-icon" style="background: var(--buoy-color);"></div>
+            <div class="layer-name">Buoys</div>
+            <div class="layer-count" id="count-buoys">0</div>
+        </div>
+
+        <div class="layer-item" id="layer-conflicts">
+            <div class="layer-toggle"></div>
+            <div class="layer-icon" style="background: #ff3d00;"></div>
+            <div class="layer-name">Conflicts</div>
+            <div class="layer-count" id="count-conflicts">0</div>
+        </div>
+    </div>
+
+    <!-- ===== WARTIME MODE TOGGLE ===== -->
+    <button class="wartime-btn" id="wartimeBtn" onclick="toggleWartime()" title="Wartime Mode — Military Only">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 1L10 5H14L11 8L12 13L8 10L4 13L5 8L2 5H6L8 1Z" fill="currentColor"/>
+        </svg>
+        <span>WARTIME</span>
+    </button>
+
+    <!-- ===== THREAT ASSESSMENT PANEL ===== -->
+    <div class="threat-panel" id="threatPanel">
+        <div class="threat-panel-header">
+            <span>THREAT ASSESSMENT</span>
+            <span class="threat-panel-close" onclick="toggleThreatPanel()">&times;</span>
+        </div>
+        <div class="threat-panel-body" id="threatPanelBody">
+            <div style="text-align:center;color:var(--text-muted);padding:30px;">Loading...</div>
+        </div>
+    </div>
+
+    <!-- ===== SPACE WEATHER PANEL ===== -->
+    <div class="weather-panel">
+        <div class="panel-title">Space Weather</div>
+        <div class="weather-row">
+            <span class="wl">Kp Index</span>
+            <span class="wv" id="kpValue">---</span>
+        </div>
+        <div class="kp-gauge" id="kpGauge">
+            <div class="kp-bar"></div>
+            <div class="kp-bar"></div>
+            <div class="kp-bar"></div>
+            <div class="kp-bar"></div>
+            <div class="kp-bar"></div>
+            <div class="kp-bar"></div>
+            <div class="kp-bar"></div>
+            <div class="kp-bar"></div>
+            <div class="kp-bar"></div>
+        </div>
+        <div class="weather-row">
+            <span class="wl">Solar Wind</span>
+            <span class="wv" id="swSpeed">---</span>
+        </div>
+        <div class="weather-row">
+            <span class="wl">Density</span>
+            <span class="wv" id="swDensity">---</span>
+        </div>
+        <div class="weather-row">
+            <span class="wl">Storms</span>
+            <span class="wv">
+                <span id="scaleR" style="margin-right:4px;">R0</span>
+                <span id="scaleS" style="margin-right:4px;">S0</span>
+                <span id="scaleG">G0</span>
+            </span>
+        </div>
+    </div>
+
+    <!-- ===== INTEL TOGGLE ===== -->
+    <button class="toggle-intel" id="toggleIntel" title="Intel Panel (I)">&#9776;</button>
+
+    <!-- ===== INTEL PANEL ===== -->
+    <div class="intel-panel" id="intelPanel">
+        <div class="intel-tabs">
+            <div class="intel-tab active" data-tab="flights">Flights</div>
+            <div class="intel-tab" data-tab="earthquakes">Quakes</div>
+            <div class="intel-tab" data-tab="ships">Ships</div>
+            <div class="intel-tab" data-tab="fires">Fires</div>
+            <div class="intel-tab" data-tab="buoys">Buoys</div>
+        </div>
+        <div class="intel-content" id="intelContent">
+            <div style="color:var(--text-muted);text-align:center;padding:40px;">Loading data...</div>
+        </div>
+    </div>
+
+    <!-- ===== NEWS TICKER ===== -->
+    <div class="news-ticker" id="newsTicker">
+        <div class="ticker-label">ALERTS</div>
+        <div class="ticker-track" id="tickerTrack"></div>
+    </div>
+
+    <!-- ===== SCRIPTS ===== -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <script src="/js/map.js"></script>
+    <script src="/js/flags.js"></script>
+    <script src="/js/icons.js"></script>
+    <script src="/js/popups.js"></script>
+    <script src="/js/military.js"></script>
+    <script src="/js/search.js"></script>
+    <script src="/js/urlstate.js"></script>
+    <script src="/js/measure.js"></script>
+    <script src="/js/countryfilter.js"></script>
+    <script src="/js/layers.js"></script>
+    <script src="/js/panels.js"></script>
+</body>
+</html>
