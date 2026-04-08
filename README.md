@@ -36,7 +36,7 @@ A real-time global monitoring dashboard that tracks flights, ships, earthquakes,
 ### 1. Clone the repo
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/world-dashboard.git
+git clone https://github.com/philpinto/world-dashboard.git
 cd world-dashboard
 ```
 
